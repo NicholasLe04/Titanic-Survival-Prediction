@@ -23,6 +23,8 @@ class NeuralNetwork():
             activation_func = self.relu
         elif activation == "sigmoid":
             activation_func = self.sigmoid
+        elif activation == "leaky relu":
+            activation_func = self.leaky_relu
         else:
             raise Exception('Non-supported activation function')
             
@@ -54,6 +56,8 @@ class NeuralNetwork():
             backward_activation_func = self.relu_backward
         elif activation == "sigmoid":
             backward_activation_func = self.sigmoid_backward
+        elif activation == "leaky relu":
+            backward_activation_func = self.leaky_relu_backward
         else:
             raise Exception('Non-supported activation function')
         
@@ -114,13 +118,18 @@ class NeuralNetwork():
         return self.params_values, cost_history, accuracy_history
 
 
-    ## ACTIVATION FUNCTIONS
+    # ACTIVATION FUNCTIONS
 
     def sigmoid(self, Z):
         return 1/(1+np.exp(-Z))
 
     def relu(self, Z):
         return np.maximum(0,Z)
+
+    def leaky_relu(self, Z):
+        return np.maximum(0.1*Z, Z)
+        
+    # ACTIVATION FUNCTION DERIVATIVES
 
     def sigmoid_backward(self, dA, Z):
         sig = self.sigmoid(Z)
@@ -129,6 +138,11 @@ class NeuralNetwork():
     def relu_backward(self, dA, Z):
         dZ = np.array(dA, copy = True)
         dZ[Z <= 0] = 0;
+        return dZ;
+
+    def leaky_relu_backward(self, dA, Z):
+        dZ = np.array(dA, copy = True)
+        dZ[Z <= 0] = dA[Z <= 0] * 0.01;
         return dZ;
 
 
