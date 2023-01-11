@@ -13,11 +13,11 @@ class NeuralNetwork():
             layer_input_size = layer["input_dim"]
             layer_output_size = layer["output_dim"]
             self.params_values['W' + str(layer_idx)] = np.random.randn(layer_output_size, layer_input_size) * 0.1
-            self.params_values['b' + str(layer_idx)] = np.random.randn(layer_output_size, 1) * 0.1
+            self.params_values['B' + str(layer_idx)] = np.random.randn(layer_output_size, 1) * 0.1
             
 
-    def single_layer_forward_propagation(self, A_prev, W_curr, b_curr, activation="relu"):
-        Z_curr = np.dot(W_curr, A_prev) + b_curr
+    def single_layer_forward_propagation(self, A_prev, W_curr, B_curr, activation="relu"):
+        Z_curr = np.dot(W_curr, A_prev) + B_curr
         
         if activation == "relu":
             activation_func = self.relu
@@ -25,6 +25,8 @@ class NeuralNetwork():
             activation_func = self.sigmoid
         elif activation == "leaky relu":
             activation_func = self.leaky_relu
+        elif activation == "tanh":
+            activation_func = self.tanh
         else:
             raise Exception('Non-supported activation function')
             
@@ -40,8 +42,8 @@ class NeuralNetwork():
             
             activ_function_curr = layer["activation"]
             W_curr = self.params_values["W" + str(layer_idx)]
-            b_curr = self.params_values["b" + str(layer_idx)]
-            A_curr, Z_curr = self.single_layer_forward_propagation(A_prev, W_curr, b_curr, activ_function_curr)
+            B_curr = self.params_values["B" + str(layer_idx)]
+            A_curr, Z_curr = self.single_layer_forward_propagation(A_prev, W_curr, B_curr, activ_function_curr)
             
             memory["A" + str(idx)] = A_prev
             memory["Z" + str(layer_idx)] = Z_curr
@@ -58,15 +60,17 @@ class NeuralNetwork():
             backward_activation_func = self.sigmoid_backward
         elif activation == "leaky relu":
             backward_activation_func = self.leaky_relu_backward
+        elif activation == "tanh":
+            backward_activation_func = self.tanh_backward
         else:
             raise Exception('Non-supported activation function')
         
         dZ_curr = backward_activation_func(dA_curr, Z_curr)
         dW_curr = np.dot(dZ_curr, A_prev.T) / m
-        db_curr = np.sum(dZ_curr, axis=1, keepdims=True) / m
+        dB_curr = np.sum(dZ_curr, axis=1, keepdims=True) / m
         dA_prev = np.dot(W_curr.T, dZ_curr)
 
-        return dA_prev, dW_curr, db_curr
+        return dA_prev, dW_curr, dB_curr
 
     def full_backward_propagation(self, Y_hat, Y, memory):
         gradient_values = {}
@@ -84,10 +88,10 @@ class NeuralNetwork():
             Z_curr = memory["Z" + str(layer_idx_curr)]
             W_curr = self.params_values["W" + str(layer_idx_curr)]
             
-            dA_prev, dW_curr, db_curr = self.single_layer_backward_propagation(dA_curr, W_curr, Z_curr, A_prev, activ_function_curr)
+            dA_prev, dW_curr, dB_curr = self.single_layer_backward_propagation(dA_curr, W_curr, Z_curr, A_prev, activ_function_curr)
             
             gradient_values["dW" + str(layer_idx_curr)] = dW_curr
-            gradient_values["db" + str(layer_idx_curr)] = db_curr
+            gradient_values["dB" + str(layer_idx_curr)] = dB_curr
         
         return gradient_values
 
@@ -96,7 +100,7 @@ class NeuralNetwork():
     def update(self, grads_values, learning_rate):
         for layer_idx in range(1, len(self.nn_arch)):
             self.params_values["W" + str(layer_idx)] -= learning_rate * grads_values["dW" + str(layer_idx)]        
-            self.params_values["b" + str(layer_idx)] -= learning_rate * grads_values["db" + str(layer_idx)]
+            self.params_values["B" + str(layer_idx)] -= learning_rate * grads_values["dB" + str(layer_idx)]
 
         return self.params_values
 
@@ -128,6 +132,9 @@ class NeuralNetwork():
 
     def leaky_relu(self, Z):
         return np.maximum(0.1*Z, Z)
+
+    def tanh (self, Z):
+        return (np.exp(Z) - np.exp(-Z)) / (np.exp(Z) + np.exp(-Z))
         
     # ACTIVATION FUNCTION DERIVATIVES
 
@@ -144,6 +151,10 @@ class NeuralNetwork():
         dZ = np.array(dA, copy = True)
         dZ[Z <= 0] = dA[Z <= 0] * 0.01;
         return dZ;
+
+    def tanh_backward(self, dA, Z):
+        t = self.tanh(Z)
+        return dA * (1 - (t * t))
 
 
     ## LOSS CALCULATION

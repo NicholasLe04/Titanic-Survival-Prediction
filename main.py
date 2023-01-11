@@ -34,7 +34,7 @@ nn_architecture = [
     {"input_dim": 10, "output_dim": 10, "activation": "leaky relu"},
     {"input_dim": 10, "output_dim": 10, "activation": "leaky relu"},
     {"input_dim": 10, "output_dim": 5, "activation": "leaky relu"},
-    {"input_dim": 5, "output_dim": 1, "activation": "sigmoid"},
+    {"input_dim": 5, "output_dim": 1, "activation": "tanh"},
 ]
 
 
@@ -42,7 +42,7 @@ test = []
 
 nn = NeuralNetwork(nn_architecture, 5)
 
-nn.train(training_inputs, training_outputs, 100000, 0.01)
+nn.train(training_inputs, training_outputs, 10000, 0.01)
 
 test.append([float(input("Which class was this passenger? (1/2/3)   "))])
 test.append([float(input("Was this passenger male or female? (male = 0, female = 1)    "))])
