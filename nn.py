@@ -47,7 +47,7 @@ class NeuralNetwork():
         return A_curr, memory
 
 
-    def single_layer_backward_propagation(self, dA_curr, W_curr, b_curr, Z_curr, A_prev, activation="relu"):
+    def single_layer_backward_propagation(self, dA_curr, W_curr, Z_curr, A_prev, activation="relu"):
         m = A_prev.shape[1]
         
         if activation == "relu":
@@ -66,7 +66,6 @@ class NeuralNetwork():
 
     def full_backward_propagation(self, Y_hat, Y, memory):
         gradient_values = {}
-        m = Y.shape[1]
         Y = Y.reshape(Y_hat.shape)
     
         dA_prev = - (np.divide(Y, Y_hat) - np.divide(1 - Y, 1 - Y_hat));
@@ -80,9 +79,8 @@ class NeuralNetwork():
             A_prev = memory["A" + str(layer_idx_prev)]
             Z_curr = memory["Z" + str(layer_idx_curr)]
             W_curr = self.params_values["W" + str(layer_idx_curr)]
-            b_curr = self.params_values["b" + str(layer_idx_curr)]
             
-            dA_prev, dW_curr, db_curr = self.single_layer_backward_propagation(dA_curr, W_curr, b_curr, Z_curr, A_prev, activ_function_curr)
+            dA_prev, dW_curr, db_curr = self.single_layer_backward_propagation(dA_curr, W_curr, Z_curr, A_prev, activ_function_curr)
             
             gradient_values["dW" + str(layer_idx_curr)] = dW_curr
             gradient_values["db" + str(layer_idx_curr)] = db_curr
@@ -92,7 +90,7 @@ class NeuralNetwork():
 
     ## Adjusts weights and biases by moving in the opposite direction of gradient
     def update(self, grads_values, learning_rate):
-        for layer_idx, layer in enumerate(self.nn_arch, 1):
+        for layer_idx in range(1, len(self.nn_arch)):
             self.params_values["W" + str(layer_idx)] -= learning_rate * grads_values["dW" + str(layer_idx)]        
             self.params_values["b" + str(layer_idx)] -= learning_rate * grads_values["db" + str(layer_idx)]
 
@@ -153,7 +151,7 @@ class NeuralNetwork():
 
 
     def predict (self, test_input):
-        return self.full_forward_propagation(test_input)[0]
+        return self.full_forward_propagation(test_input)[0][0][0]
 
 
 ## RUNNING ##

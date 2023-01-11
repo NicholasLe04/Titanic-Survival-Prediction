@@ -2,7 +2,7 @@ from nn import *
 import csv
 import numpy as np
 
-input_array = []
+input_array = [[],[],[],[],[],[],[]]
 output_array = []
 
 
@@ -11,36 +11,21 @@ with open('train.csv', 'r') as csv_file:
 
     next(data)
 
-    pclass=[]
-    sex=[]
-    age=[]
-    sibsp=[]
-    parch=[]
-    fare=[]
-    embarked=[]
 
     for row in data:
         output_array.append([float(row[1])])
+        input_array[0].append(float(row[2]))
+        input_array[1].append(0) if row[4] == "male" else input_array[1].append(1)
+        input_array[2].append(30) if row[5] == "" else input_array[2].append(float(row[5]))
+        input_array[3].append(float(row[6]))
+        input_array[4].append(float(row[7]))
+        input_array[5].append(float(row[9]))
+        input_array[6].append(0) if row[11] == '' else input_array[6].append(ord(row[11])-64)
 
-        pclass.append(float(row[2]))
-        sex.append(0) if row[4] == "male" else sex.append(1)
-        age.append(30) if row[5] == "" else age.append(float(row[5]))
-        sibsp.append(float(row[6]))
-        parch.append(float(row[7]))
-        fare.append(float(row[9]))
-        embarked.append(0) if row[11] == '' else embarked.append(ord(row[11])-64)
 
-    input_array.append(pclass)
-    input_array.append(sex)
-    input_array.append(age)
-    input_array.append(sibsp)
-    input_array.append(parch)
-    input_array.append(fare)
-    input_array.append(embarked)
+training_inputs = np.array(input_array)
 
-X = np.array(input_array)
-
-Y = np.array(output_array).T
+training_outputs = np.array(output_array).T
 
 ## 7 Inputs -> class, sex, age, sibsp, parch, fare, embarked
 
@@ -54,11 +39,10 @@ nn_architecture = [
 
 
 test = []
-    
 
-nn = NeuralNetwork(nn_architecture)
+nn = NeuralNetwork(nn_architecture, 5)
 
-nn.train(X, Y, 10000, 0.01)
+nn.train(training_inputs, training_outputs, 10000, 0.01)
 
 test.append([float(input("Which class was this passenger? (1/2/3)   "))])
 test.append([float(input("Was this passenger male or female? (male = 0, female = 1)    "))])
@@ -66,6 +50,6 @@ test.append([float(input("How old was this passenger?   "))])
 test.append([float(input("How many siblings or spouses did this passenger have on board?    "))])
 test.append([float(input("How many parents or children did this passenger have on board?    "))])
 test.append([float(input("How much was this passengers ticket?    "))])
-test.append([float(input("Where did this passenger depart from? (C = 3, Q = 17, S = 19)   "))])
+test.append([float(input("Where did this passenger depart from? (Cherbourg = 3, Queenstown = 17, Southampton = 19)   "))])
 
-print(nn.predict(np.asarray(test))[0][0])
+print(nn.predict(np.asarray(test)))
