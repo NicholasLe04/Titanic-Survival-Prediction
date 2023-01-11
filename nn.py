@@ -27,6 +27,8 @@ class NeuralNetwork():
             activation_func = self.leaky_relu
         elif activation == "tanh":
             activation_func = self.tanh
+        elif activation == "elu":
+            activation_func = self.elu
         else:
             raise Exception('Non-supported activation function')
             
@@ -62,6 +64,8 @@ class NeuralNetwork():
             backward_activation_func = self.leaky_relu_backward
         elif activation == "tanh":
             backward_activation_func = self.tanh_backward
+        elif activation == "elu":
+            backward_activation_func = self.elu_backward
         else:
             raise Exception('Non-supported activation function')
         
@@ -72,11 +76,11 @@ class NeuralNetwork():
 
         return dA_prev, dW_curr, dB_curr
 
-    def full_backward_propagation(self, Y_hat, Y, memory):
+    def full_backward_propagation(self, Y_out, Y, memory):
         gradient_values = {}
-        Y = Y.reshape(Y_hat.shape)
+        Y = Y.reshape(Y_out.shape)
     
-        dA_prev = - (np.divide(Y, Y_hat) - np.divide(1 - Y, 1 - Y_hat));
+        dA_prev = - (np.divide(Y, Y_out) - np.divide(1 - Y, 1 - Y_out));
         
         for layer_idx_prev, layer in reversed(list(enumerate(self.nn_arch))):
             layer_idx_curr = layer_idx_prev + 1
@@ -110,20 +114,20 @@ class NeuralNetwork():
         accuracy_history = []
         
         for i in range(epochs):
-            Y_hat, cashe = self.full_forward_propagation(X)
-            cost = self.get_cost_value(Y_hat, Y)
+            Y_out, cashe = self.full_forward_propagation(X)
+            cost = self.get_cost_value(Y_out, Y)
             cost_history.append(cost)
-            accuracy = self.get_accuracy_value(Y_hat, Y)
+            accuracy = self.get_accuracy_value(Y_out, Y)
             accuracy_history.append(accuracy)
             
-            grads_values = self.full_backward_propagation(Y_hat, Y, cashe)
+            grads_values = self.full_backward_propagation(Y_out, Y, cashe)
             self.params_values = self.update(grads_values, learning_rate)
             
         return self.params_values, cost_history, accuracy_history
 
 
     # ACTIVATION FUNCTIONS
-
+    
     def sigmoid(self, Z):
         return 1/(1+np.exp(-Z))
 
@@ -135,6 +139,9 @@ class NeuralNetwork():
 
     def tanh (self, Z):
         return (np.exp(Z) - np.exp(-Z)) / (np.exp(Z) + np.exp(-Z))
+
+    def elu (self, Z):
+        return (np.log(1+np.exp(Z)))
         
     # ACTIVATION FUNCTION DERIVATIVES
 
@@ -155,18 +162,23 @@ class NeuralNetwork():
     def tanh_backward(self, dA, Z):
         t = self.tanh(Z)
         return dA * (1 - (t * t))
+    
+    def elu_backward(self, dA, Z):
+        return dA * self.sigmoid(Z)
 
 
     ## LOSS CALCULATION
 
-    def get_cost_value(self, Y_hat, Y):
-        m = Y_hat.shape[1]
-        cost = -1 / m * (np.dot(Y, np.log(Y_hat).T) + np.dot(1 - Y, np.log(1 - Y_hat).T))
+
+    def get_cost_value(self, Y_out, Y):
+        m = Y_out.shape[1]
+        error = np.subtract(Y[0],Y_out[0])
+        cost = np.dot(error, error) / m
         return np.squeeze(cost)
 
-    def get_accuracy_value(self, Y_hat, Y):
-        Y_hat_ = self.convert_prob_into_class(Y_hat)
-        return (Y_hat_ == Y).all(axis=0).mean()
+    def get_accuracy_value(self, Y_out, Y):
+        Y_out_ = self.convert_prob_into_class(Y_out)
+        return (Y_out_ == Y).all(axis=0).mean()
 
     def convert_prob_into_class(self, probs):
             probs_ = np.copy(probs)
